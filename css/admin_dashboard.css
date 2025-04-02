@@ -122,7 +122,7 @@ header nav ul li a:hover {
 }
 
 #search-box {
-    width: 100%;
+    width: 98%;
     padding: 10px;
     margin-bottom: 15px;
     border: 1px solid #cccccc;
@@ -186,7 +186,14 @@ table td button:hover {
 }
 
 
+.logout-container {
+    justify-content: flex-end; /* Aligns the button to the right */
+}
+
 .logout-button {
+    position: absolute;
+    right: 20px; /* Adjust based on your layout */
+    top: 10px; /* Adjust for vertical alignment */
     background-color: #004b87;
     color: white;
     padding: 10px 15px;
@@ -218,6 +225,17 @@ table td button:hover {
 }
 
 .dashboard-button:hover {
+    background-color: #0056b3;
+    color: white;
+}
+
+.import-button {
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.import-button:hover {
     background-color: #0056b3;
     color: white;
 }
@@ -298,3 +316,74 @@ form button {
 form button:hover {
     background-color: #003366;
 }
+
+/* */
+
+.filter-form {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    max-width: 800px;
+    padding: 15px;
+    background-color: #f0f4f8;
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    font-family: sans-serif;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .filter-form label {
+    color: #002366;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0;
+    white-space: nowrap;
+    flex-basis: auto;
+  }
+  
+  .filter-form input[type="date"],
+  .filter-form input[type="week"],
+  .filter-form input[type="month"] {
+    padding: 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #555;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease-in-out;
+    flex-grow: 1;
+    min-width: 100px;
+  }
+  
+  .filter-form input[type="date"]:focus,
+  .filter-form input[type="week"]:focus,
+  .filter-form input[type="month"]:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+  
+  .filter-form button {
+    padding: 0.6rem 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    width: 100%;
+    margin-top: 1rem;
+    order: 100;
+  }
+  
+  .filter-form button:hover {
+    background-color: #0056b3;
+  }
+  
+  .filter-form button:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5);
+  }

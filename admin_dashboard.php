@@ -144,7 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                     <li><a href="admin_dashboard.php" class="dashboard-button">Dashboard</a></li>
                     <!-- <li><a href="teacher_dashboard.php">Teacher Dashboard</a></li> -->
                     <li><a href="#" class="download-button">Download</a></li>
-                    <li><a href="logout.php" class="logout-button">Logout</a></li>
+                    <li><a href="#" class="import-button">Import CSV/Excel</a></li>
+                    <li><a href="logout.php" class="logout-container logout-button">Logout</a></li>
                 </ul>
             </nav>
         </header>
@@ -168,7 +169,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
 
         <br>
         <br>
-
     <!-- -->
         <section class="section violators-list">
             <h2>Today's Violations</h2>
@@ -197,6 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
             </div>
         </section>
         <br>
+
      <!-- -->
         <section class="section frequent-violators">
             <h2>Violation History</h2>
@@ -222,12 +223,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
             </table>
             </div>
         </section>
-
         <br>
+         <!-- -->
         <br>
-
-        
-
             <section class="registration-control">
                 <h2>Registration Control</h2>
                 <form method="POST">
@@ -238,6 +236,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
 
             <section class="user-accounts">
                 <h2>User Accounts</h2>
+                <form method="GET" class="filter-form">
+                    <label for="filter_date">Date:</label>
+                    <input type="date" name="filter_date" id="filter_date" value="<?= $_GET['filter_date'] ?? '' ?>">
+
+                    <label for="filter_week">Week:</label>
+                    <input type="week" name="filter_week" id="filter_week" value="<?= $_GET['filter_week'] ?? '' ?>">
+
+                    <label for="filter_month">Month:</label>
+                    <input type="month" name="filter_month" id="filter_month" value="<?= $_GET['filter_month'] ?? '' ?>">
+
+                    <button type="submit">Apply Filter</button>
+                </form>
+                <br>
                 <input type="text" id="search-box" placeholder="Search by username..." onkeyup="filterUsers()">
                 <table id="user-table">
                     <thead>
