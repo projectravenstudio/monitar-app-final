@@ -1,0 +1,263 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #eaf3fb;
+    color: #333;
+}
+
+.dashboard {
+    width: 90%;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    padding: 20px;
+    background: #003366;
+    color: #fff;
+    text-align: center;
+    border-radius: 8px 8px 0 0;
+}
+
+.btn {
+    text-decoration: none;
+    color: white;
+    padding: 8px 12px;
+    background: #00509e;
+    border-radius: 4px;
+    margin-right: 10px;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #002e5d;
+}
+
+.section {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    background: #f4f7fb;
+    border: 1px solid #c5e1a5;
+}
+
+h2 {
+    color: #003366;
+    margin-bottom: 15px;
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 16px;
+}
+
+.styled-table th, 
+.styled-table td {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.styled-table th {
+    background: #003366;
+    color: white;
+}
+
+/* Table row hover effect */
+.styled-table tr:hover {
+    background: #e1ebf5;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 600px;
+}
+
+.modal-content {
+    position: relative; /* Added this line! */
+}
+
+#modal-header {
+    color: white;
+    padding: 10px;
+    font-size: 16px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+/* Close Button */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 20px;
+    cursor: pointer;
+    color: #555;
+    transition: color 0.3s ease;
+    z-index: 1001; /* Increased z-index! */
+}
+
+.close-btn:hover {
+    color: #d9534f;
+}
+
+/* Modal Title */
+.modal-content h2 {
+    margin-bottom: 15px;
+    color: #003366;
+    align-items: center;
+}
+
+/* Violation Details Container */
+#violation-details {
+    text-align: left;
+    font-size: 16px;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 90%;
+    }
+}
+
+/* Text Fields */
+.edit-description {
+    width: 90%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    outline: none;
+    transition: border 0.3s;
+}
+
+.edit-description:focus {
+    border-color: #003366;
+}
+
+/* Buttons */
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.save-edit {
+    background: #28a745;
+    color: white;
+}
+
+.save-edit:hover {
+    background: #218838;
+}
+
+.delete-violation {
+    background: #dc3545;
+    color: white;
+}
+
+.delete-violation:hover {
+    background: #c82333;
+}
+
+.view-violations {
+    background: #003366;
+    color: white;
+}
+
+.view-violations:hover {
+    background: #002e5d;
+}
+
+/* Table Inside Modal */
+.modal-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.modal-content th, 
+.modal-content td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+.modal-content th {
+    background: #003366;
+    color: white;
+}
+
+.table-container {
+    max-height: 300px; /* Adjust height as needed */
+    overflow-y: auto;
+    border: 1px solid #ccc; /* Optional: Adds border */
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.styled-table th, .styled-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+.search-box {
+    margin-bottom: 10px;
+    padding: 5px;
+    width: 100%;
+}
+
+/* Style for all search boxes */
+input[type="text"] {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid #007BFF;
+    border-radius: 5px;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Add focus effect */
+input[type="text"]:focus {
+    border-color: #0056b3;
+    box-shadow: 0 0 8px rgba(0, 91, 187, 0.5);
+}
+
+/* Center search box */
+.section input[type="text"] {
+    display: block;
+    margin: 0 auto 15px auto;
+}
+
+/* Optional: Add placeholder styling */
+input[type="text"]::placeholder {
+    color: #888;
+    font-style: italic;
+}

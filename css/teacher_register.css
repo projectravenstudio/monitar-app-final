@@ -1,0 +1,100 @@
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #e3f2fd;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+}
+
+
+.container {
+    width: 90%;
+    max-width: 500px;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+h1 {
+    color: #4169e1; 
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+form input, form select {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    background-color: #fafafa; 
+    transition: border-color 0.3s ease;
+}
+
+
+form input:focus, form select:focus {
+    border-color: #4169e1; 
+    outline: none;
+}
+
+
+form select {
+    appearance: none;
+    background-color: #fafafa;
+    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"%3E%3Cpath d="M31.3 118.6l96 96c4.7 4.7 12.3 4.7 17 0l96-96c4.7-4.7 12.3-4.7 17 0 4.7 4.7 4.7 12.3 0 17l-96 96c-9.4 9.4-24.6 9.4-34 0l-96-96c-4.7-4.7-4.7-12.3 0-17 4.7-4.7 12.3-4.7 17 0z" fill="%234169e1"/%3E%3C/svg%3E'); /* button thing kasi tinatamad mag design HAHHAHA*/
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 15px;
+}
+
+
+form button {
+    width: 100%;
+    padding: 12px;
+    background-color: #4169e1; 
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+form button:hover {
+    background-color: #365dbf; 
+}
+
+
+.error, .success {
+    color: white;
+    background-color: #e53935; 
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.success {
+    background-color: #4169e1; 
+}
+
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    form input, form button, form select {
+        font-size: 1rem;
+    }
+}

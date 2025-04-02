@@ -1,0 +1,127 @@
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #eaf3fb;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+a {
+    text-decoration: none;
+}
+
+h1, h2 {
+    color: #003366; 
+}
+
+
+.header {
+    background-color: #003366;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+.header p {
+    font-size: 1.1rem;
+}
+
+.header .header-buttons {
+    margin-top: 10px;
+}
+
+.header .btn {
+    background-color: #00509e; 
+    color: white;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.header .btn:hover {
+    background-color: #002e5d;
+}
+
+
+.student-details {
+    max-width: 900px;
+    margin: 30px auto;
+    background-color: white;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.student-details section {
+    margin-bottom: 20px;
+}
+
+.section h2 {
+    background-color: #003366; 
+    color: white;
+    padding: 10px;
+    margin: 0;
+    border-radius: 5px 5px 0 0;
+}
+
+.section p, .section table {
+    padding: 10px;
+    background-color: #f4f7fb; 
+    border-radius: 0 0 5px 5px;
+}
+
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.styled-table th, .styled-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.styled-table th {
+    background-color: #00509e; 
+    color: white;
+}
+
+.styled-table td {
+    background-color: #f4f7fb; 
+}
+
+.styled-table tr:hover {
+    background-color: #e1ebf5; 
+}
+
+
+@media (max-width: 768px) {
+    .student-details {
+        padding: 15px;
+    }
+
+    .header h1 {
+        font-size: 1.6rem;
+    }
+
+    .header p {
+        font-size: 1rem;
+    }
+
+    .styled-table th, .styled-table td {
+        padding: 8px;
+    }
+
+    .header .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+}

@@ -1,0 +1,107 @@
+/* Updated CSS with professional table styling for violation types */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #e3f2fd;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+}
+
+.container {
+    width: 90%;
+    max-width: 550px;
+    padding: 25px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+h1 {
+    color: #4169e1;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+form input, form select, form button {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: 0.3s ease;
+}
+
+form input, form select {
+    border: 1px solid #ddd;
+    background-color: #fafafa;
+}
+
+form input:focus, form select:focus {
+    border-color: #4169e1;
+    outline: none;
+}
+
+form button {
+    background-color: #4169e1;
+    color: white;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: 0.3s ease;
+}
+
+form button:hover {
+    background-color: #365dbf;
+}
+
+.error, .success {
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.success {
+    background-color: #4169e1;
+}
+
+.error {
+    background-color: #e53935;
+}
+
+.violations-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+}
+
+.violations-table th, .violations-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+.violations-table th {
+    background-color: #4169e1;
+    color: white;
+    font-weight: bold;
+}
+
+.violations-table td input[type="checkbox"] {
+    transform: scale(1.2);
+    accent-color: #4169e1;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+}

@@ -1,0 +1,113 @@
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #eaf3fb; 
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    height: 100vh;
+}
+
+.dashboard {
+    width: 90%;
+    max-width: 500px; 
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+.header {
+    padding: 20px;
+    background-color: #003366;
+    color: #ffffff;
+    text-align: center;
+    border-radius: 8px 8px 0 0;
+}
+
+.header-buttons {
+    margin-top: 10px;
+}
+
+.btn {
+    text-decoration: none;
+    color: white;
+    padding: 8px 12px;
+    background-color: #00509e;
+    border-radius: 4px;
+    margin-right: 10px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #002e5d;
+}
+
+
+.section {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f4f7fb; 
+    border: 1px solid #c5e1a5;
+}
+
+h2 {
+    color: #003366;
+    margin-bottom: 15px;
+}
+
+
+input[type="text"], select {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0 20px 0;
+    display: block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+
+select {
+    background-color: #ffffff;
+    color: #333;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 6"><path fill="%23003366" d="M0 0l5 6 5-6z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px 6px;
+}
+
+select:focus {
+    border-color: #00509e; 
+    outline: none;
+}
+
+button[type="submit"] {
+    text-decoration: none;
+    color: white;
+    padding: 10px 15px;
+    background-color: #00509e;
+    border-radius: 4px;
+    margin-top: 10px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button[type="submit"]:hover {
+    background-color: #002e5d; 
+}
+
+.footer {
+    margin-top: 20px;
+    text-align: center;
+}
