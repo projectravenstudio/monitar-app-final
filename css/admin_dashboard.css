@@ -196,7 +196,30 @@ table td button:hover {
 }
 
 .logout-button:hover {
-    background-color: #0056b3; 
+    background-color: #0056b3;
+    color: white;
+}
+
+.download-button {
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.download-button:hover {
+    background-color: #0056b3;
+    color: white;
+}
+
+.dashboard-button {
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.dashboard-button:hover {
+    background-color: #0056b3;
+    color: white;
 }
 
 

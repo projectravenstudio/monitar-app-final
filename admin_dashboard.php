@@ -18,6 +18,43 @@ $total_teachers = $conn->query($query_teachers)->fetch_assoc()['total_teachers']
 $query_students = "SELECT COUNT(*) as total_students FROM stud_tbl";
 $total_students = $conn->query($query_students)->fetch_assoc()['total_students'];
 
+// 
+
+// Fetch class list
+$class_query = "SELECT * FROM stud_tbl WHERE grade_level = ? AND section = ?";
+$class_stmt = $conn->prepare($class_query);
+$class_stmt->bind_param("ss", $teacher_grade_level, $teacher_section);
+$class_stmt->execute();
+$class_result = $class_stmt->get_result();
+
+// Fetch violators for today
+$today = date('Y-m-d');
+$violators_query = "SELECT v.*, s.first_name, s.last_name 
+                    FROM violations v 
+                    JOIN stud_tbl s ON v.username = s.username 
+                    WHERE s.grade_level = ? 
+                    AND s.section = ? 
+                    AND v.violation_date = ?";
+$violators_stmt = $conn->prepare($violators_query);
+$violators_stmt->bind_param("sss", $teacher_grade_level, $teacher_section, $today);
+$violators_stmt->execute();
+$violators_result = $violators_stmt->get_result();
+
+
+// Fetch violation history
+$violation_history_query = "SELECT s.username, s.first_name, s.last_name, 
+                            COUNT(v.id) AS violation_count 
+                            FROM stud_tbl s 
+                            LEFT JOIN violations v ON s.username = v.username 
+                            WHERE s.grade_level = ? AND s.section = ? 
+                            GROUP BY s.username, s.first_name, s.last_name
+                            HAVING violation_count > 0";
+
+$violation_history_stmt = $conn->prepare($violation_history_query);
+$violation_history_stmt->bind_param("ss", $teacher_grade_level, $teacher_section);
+$violation_history_stmt->execute();
+$violation_history_result = $violation_history_stmt->get_result();
+
 //  all users
 $query_all_users = "SELECT id, username, first_name, last_name, grade_level, section, role FROM teach_user";
 $all_users = $conn->query($query_all_users)->fetch_all(MYSQLI_ASSOC);
@@ -34,6 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_registration']
     header("Location: admin_dashboard.php");
     exit;
 }
+
+
 
 // Default password hash (replace with your generated hash!)
 define('DEFAULT_PASSWORD_HASH', '$2y$10$YOUR_GENERATED_HASH_HERE');
@@ -65,6 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
+
     <link rel="stylesheet" href="css/admin_dashboard.css">
     <style>
         .dropdown {
@@ -101,13 +141,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
             <h1>Welcome, Admin</h1>
             <nav>
                 <ul>
-                    <li><a href="admin_dashboard.php">Dashboard</a></li>
-                    <li><a href="teacher_dashboard.php">Teacher Dashboard</a></li>
+                    <li><a href="admin_dashboard.php" class="dashboard-button">Dashboard</a></li>
+                    <!-- <li><a href="teacher_dashboard.php">Teacher Dashboard</a></li> -->
+                    <li><a href="#" class="download-button">Download</a></li>
                     <li><a href="logout.php" class="logout-button">Logout</a></li>
                 </ul>
             </nav>
         </header>
-
+        <br>
         <main>
             <section class="stats">
                 <h2>Statistics</h2>
@@ -124,6 +165,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                     <p><?= $total_students; ?></p>
                 </div>
             </section>
+
+        <br>
+        <br>
+
+    <!-- -->
+        <section class="section violators-list">
+            <h2>Today's Violations</h2>
+            <input type="text" id="search-violators" onkeyup="searchTable('violators-table', 'search-violators')" placeholder="Search for names..">
+            <div class="table-container">
+            <table class="styled-table" id="violators-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($row = $violators_result->fetch_assoc()): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                            <td><?php echo htmlspecialchars($row['violation_description']); ?></td>
+                            <td><?php echo htmlspecialchars($row['violation_date']); ?></td>
+                            <td><?php echo date("h:i A", strtotime($row['violation_time'])); ?></td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+            </div>
+        </section>
+        <br>
+     <!-- -->
+        <section class="section frequent-violators">
+            <h2>Violation History</h2>
+            <input type="text" id="search-history" onkeyup="searchTable('history-table', 'search-history')" placeholder="Search for names..">
+            <div class="table-container">
+            <table class="styled-table" id="history-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Total Violations</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($row = $violation_history_result->fetch_assoc()): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                            <td><?php echo htmlspecialchars($row['violation_count']); ?></td>
+                            <td><button class='view-violations' data-username='<?php echo htmlspecialchars($row['username']); ?>'>View Details</button></td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+            </div>
+        </section>
+
+        <br>
+        <br>
+
+        
 
             <section class="registration-control">
                 <h2>Registration Control</h2>
