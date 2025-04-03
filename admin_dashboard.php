@@ -78,13 +78,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_registration']
 define('DEFAULT_PASSWORD_HASH', '$2y$10$YOUR_GENERATED_HASH_HERE');
 
 // Handle password reset
+// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
+//     $user_id = intval($_POST['user_id']);
+//     $update_query = "UPDATE teach_user SET password = '" . DEFAULT_PASSWORD_HASH . "', password_changed = 0 WHERE id = $user_id";
+//     $conn->query($update_query);
+//     header("Location: admin_dashboard.php");
+//     exit;
+// }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
     $user_id = intval($_POST['user_id']);
-    $update_query = "UPDATE teach_user SET password = '" . DEFAULT_PASSWORD_HASH . "', password_changed = 0 WHERE id = $user_id";
+    
+    // Ensure DEFAULT_PASSWORD_HASH is properly defined
+    $default_password = password_hash("default_password", PASSWORD_DEFAULT);
+    
+    $update_query = "UPDATE teach_user SET password = '$default_password' WHERE id = $user_id";
     $conn->query($update_query);
+    
     header("Location: admin_dashboard.php");
     exit;
 }
+
+
 
 // Handle password edit
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
@@ -169,6 +183,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
 
         <br>
         <br>
+        <form method="GET" class="filter-form">
+                    <label for="filter_date">Date:</label>
+                    <input type="date" name="filter_date" id="filter_date" value="<?= $_GET['filter_date'] ?? '' ?>">
+
+                    <label for="filter_week">Week:</label>
+                    <input type="week" name="filter_week" id="filter_week" value="<?= $_GET['filter_week'] ?? '' ?>">
+
+                    <label for="filter_month">Month:</label>
+                    <input type="month" name="filter_month" id="filter_month" value="<?= $_GET['filter_month'] ?? '' ?>">
+
+                    <button type="submit" class="apply-filter-button">Apply Filter</button>
+                </form>
+                <br>
     <!-- -->
         <section class="section violators-list">
             <h2>Today's Violations</h2>
@@ -236,19 +263,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
 
             <section class="user-accounts">
                 <h2>User Accounts</h2>
-                <form method="GET" class="filter-form">
-                    <label for="filter_date">Date:</label>
-                    <input type="date" name="filter_date" id="filter_date" value="<?= $_GET['filter_date'] ?? '' ?>">
-
-                    <label for="filter_week">Week:</label>
-                    <input type="week" name="filter_week" id="filter_week" value="<?= $_GET['filter_week'] ?? '' ?>">
-
-                    <label for="filter_month">Month:</label>
-                    <input type="month" name="filter_month" id="filter_month" value="<?= $_GET['filter_month'] ?? '' ?>">
-
-                    <button type="submit">Apply Filter</button>
-                </form>
-                <br>
                 <input type="text" id="search-box" placeholder="Search by username..." onkeyup="filterUsers()">
                 <table id="user-table">
                     <thead>
@@ -257,38 +271,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                             <th>Username</th>
                             <th>First Name</th>
                             <th>Last Name</th>
-                            <th>Grade Level</th>
-                            <th>Section</th>
+                            <th onclick="toggleFilter('grade_level')" style="cursor:pointer;">
+                                Grade Level <span id="grade_level-arrow">▲▼</span>
+                            </th>
+                            <th onclick="toggleFilter('section')" style="cursor:pointer;">
+                                Section <span id="section-arrow">▲▼</span>
+                            </th>
                             <th>Role</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($all_users as $user): ?>
-                            <tr>
+                        <?php foreach ($all_users as $index => $user): ?>
+                            <tr class="user-row" data-index="<?= $index ?>">
                                 <td><?= htmlspecialchars($user['id']); ?></td>
                                 <td><?= htmlspecialchars($user['username']); ?></td>
                                 <td><?= htmlspecialchars($user['first_name']); ?></td>
                                 <td><?= htmlspecialchars($user['last_name']); ?></td>
-                                <td><?= htmlspecialchars($user['grade_level']); ?></td>
-                                <td><?= htmlspecialchars($user['section']); ?></td>
+                                <td class="grade_level"><?= htmlspecialchars($user['grade_level']); ?></td>
+                                <td class="section"><?= htmlspecialchars($user['section']); ?></td>
                                 <td><?= htmlspecialchars($user['role']); ?></td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button>Modify</button>
-                                        <div class="dropdown-content">
-                                            <form action="admin_dashboard.php" method="POST">
-                                                <input type="hidden" name="user_id" value="<?= $user['id']; ?>">
-                                                <button type="submit" name="reset_password">Reset</button>
-                                            </form>
-                                            <form action="admin_dashboard.php" method="POST">
-                                                <input type="hidden" name="user_id" value="<?= $user['id']; ?>">
-                                                <input type="password" name="new_password" placeholder="New Password" required>
-                                                <button type="submit" name="edit_password">Edit</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </td>
+                        <!-- -->
+                        <!-- Modify Button in Table -->
+<td>
+    <button class="open-modal-btn" data-modal-id="modal-<?= $user['id']; ?>">Modify</button>
+
+    <!-- Unique Modal for this user -->
+    <div id="modal-<?= $user['id']; ?>" class="modal-<?= $user['id']; ?>">
+        <div class="modal-content-<?= $user['id']; ?>">
+            <span class="close" data-modal-id="modal-<?= $user['id']; ?>">&times;</span>
+            <h2>Modify User</h2>
+
+            <!-- Reset Password Form -->
+            <form action="admin_dashboard.php" method="POST">
+                <input type="hidden" name="user_id" value="<?= $user['id']; ?>">
+                <button type="submit" name="reset_password">Reset Password</button>
+            </form>
+            
+
+            <!-- Edit Password Form -->
+            <form action="admin_dashboard.php" method="POST">
+                <input type="hidden" name="user_id" value="<?= $user['id']; ?>">
+                <br>
+                <input type="password" name="new_password" placeholder="New Password" required>
+                <br>
+                <button type="submit" name="edit_password">Edit Password</button>
+            </form>
+        </div>
+    </div>
+</td>
+
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -309,5 +341,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
             });
         }
     </script>
+
+<script>
+let sortState = {
+    grade_level: 0, // 0 = no sort, 1 = ascending, 2 = descending
+    section: 0
+};
+
+function toggleFilter(column) {
+    const rows = Array.from(document.querySelectorAll("#user-table tbody tr"));
+    const arrow = document.getElementById(`${column}-arrow`);
+
+    if (sortState[column] === 0) {
+        // Ascending sort
+        rows.sort((a, b) => a.querySelector(`.${column}`).textContent.localeCompare(b.querySelector(`.${column}`).textContent, undefined, { numeric: true }));
+        sortState[column] = 1;
+        arrow.innerHTML = "▲";
+    } else if (sortState[column] === 1) {
+        // Descending sort
+        rows.sort((a, b) => b.querySelector(`.${column}`).textContent.localeCompare(a.querySelector(`.${column}`).textContent, undefined, { numeric: true }));
+        sortState[column] = 2;
+        arrow.innerHTML = "▼";
+    } else {
+        // Reset (original order)
+        rows.sort((a, b) => a.dataset.index - b.dataset.index);
+        sortState[column] = 0;
+        arrow.innerHTML = "▲▼";
+    }
+
+    // Reset other column arrows
+    Object.keys(sortState).forEach(col => {
+        if (col !== column) {
+            document.getElementById(`${col}-arrow`).innerHTML = "▲▼";
+            sortState[col] = 0;
+        }
+    });
+
+    const tbody = document.querySelector("#user-table tbody");
+    tbody.innerHTML = ""; // Clear and re-add sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+// Store initial order
+document.querySelectorAll("#user-table tbody tr").forEach((row, index) => {
+    row.dataset.index = index;
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const openButtons = document.querySelectorAll(".open-modal-btn");
+    const closeButtons = document.querySelectorAll(".close");
+
+    // Open the modal when clicking the "Modify" button
+    openButtons.forEach(button => {
+        button.addEventListener("click", function () {
+            const modalId = this.getAttribute("data-modal-id");
+            document.getElementById(modalId).style.display = "flex";
+        });
+    });
+
+    // Close the modal when clicking the close button
+    closeButtons.forEach(button => {
+        button.addEventListener("click", function () {
+            const modalId = this.getAttribute("data-modal-id");
+            document.getElementById(modalId).style.display = "none";
+        });
+    });
+
+    // Close modal when clicking outside of it
+    window.addEventListener("click", function (event) {
+        document.querySelectorAll("[id^='modal-']").forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        });
+    });
+});
+
+
+</script>
 </body>
 </html>
