@@ -8,7 +8,7 @@
 - Open a command prompt
 - Enter the following commands:
 ```
-git clone https://github.com/kurixeno-max/monitar-app.git
+git clone https://github.com/projectravenstudio/monitar-app-final.git
 ```
 
 ## Login Information
