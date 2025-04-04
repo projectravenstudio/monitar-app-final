@@ -565,6 +565,40 @@ document.addEventListener("DOMContentLoaded", function () {
     const openButtons = document.querySelectorAll(".open-modal-btn");
     const closeButtons = document.querySelectorAll(".close");
     const downloadButton = document.querySelector(".download-button");
+    const importButton = document.querySelector(".import-button");
+    
+    importButton.addEventListener("click", function() {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = ".csv";
+        fileInput.style.display = "none";
+        document.body.appendChild(fileInput);
+
+        fileInput.addEventListener("change", function() {
+            const file = fileInput.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append("csv_file", file);
+
+                fetch("import_csv.php", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Records imported successfully.");
+                        location.reload();
+                    } else {
+                        alert("Failed to import records.");
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+            }
+            document.body.removeChild(fileInput);
+        });
+        fileInput.click();
+    });
 
     // Open the modal when clicking the "Modify" button
     openButtons.forEach(button => {
@@ -622,6 +656,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+    
+
 
 });
 
