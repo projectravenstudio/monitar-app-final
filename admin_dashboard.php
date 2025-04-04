@@ -20,38 +20,33 @@ $total_students = $conn->query($query_students)->fetch_assoc()['total_students']
 
 // 
 
-// Fetch class list
-$class_query = "SELECT * FROM stud_tbl WHERE grade_level = ? AND section = ?";
-$class_stmt = $conn->prepare($class_query);
-$class_stmt->bind_param("ss", $teacher_grade_level, $teacher_section);
-$class_stmt->execute();
-$class_result = $class_stmt->get_result();
+// // Fetch class list
+// $class_query = "SELECT * FROM stud_tbl WHERE grade_level = ? AND section = ?";
+// $class_stmt = $conn->prepare($class_query);
+// $class_stmt->bind_param("ss", $teacher_grade_level, $teacher_section);
+// $class_stmt->execute();
+// $class_result = $class_stmt->get_result();
 
 // Fetch violators for today
 $today = date('Y-m-d');
 $violators_query = "SELECT v.*, s.first_name, s.last_name 
                     FROM violations v 
                     JOIN stud_tbl s ON v.username = s.username 
-                    WHERE s.grade_level = ? 
-                    AND s.section = ? 
-                    AND v.violation_date = ?";
+                    WHERE v.violation_date = ?";
 $violators_stmt = $conn->prepare($violators_query);
-$violators_stmt->bind_param("sss", $teacher_grade_level, $teacher_section, $today);
+$violators_stmt->bind_param("s", $today);
 $violators_stmt->execute();
 $violators_result = $violators_stmt->get_result();
 
 
 // Fetch violation history
-$violation_history_query = "SELECT s.username, s.first_name, s.last_name, 
+$violation_history_query = "SELECT s.username, s.first_name, s.last_name, s.grade_level, s.section,
                             COUNT(v.id) AS violation_count 
                             FROM stud_tbl s 
                             LEFT JOIN violations v ON s.username = v.username 
-                            WHERE s.grade_level = ? AND s.section = ? 
                             GROUP BY s.username, s.first_name, s.last_name
                             HAVING violation_count > 0";
-
 $violation_history_stmt = $conn->prepare($violation_history_query);
-$violation_history_stmt->bind_param("ss", $teacher_grade_level, $teacher_section);
 $violation_history_stmt->execute();
 $violation_history_result = $violation_history_stmt->get_result();
 
@@ -121,6 +116,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
 
     <link rel="stylesheet" href="css/admin_dashboard.css">
     <style>
+        .filters{
+            margin-top: 10px;
+        }
+
         .dropdown {
             position: relative;
             display: inline-block;
@@ -200,56 +199,229 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
         <section class="section violators-list">
             <h2>Today's Violations</h2>
             <input type="text" id="search-violators" onkeyup="searchTable('violators-table', 'search-violators')" placeholder="Search for names..">
+            
+            <!-- New Filters for Grade Level and Section -->
+            <div class="filters">
+            <label for="violator-grade-filter">Grade Level:</label>
+            <select id="violator-grade-filter" onchange="updateSectionsViolators(); filterViolators();">
+                <option value="">All</option>
+                <?php
+                $grades = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
+                foreach ($grades as $grade) {
+                echo "<option value='" . htmlspecialchars($grade) . "'>" . htmlspecialchars($grade) . "</option>";
+                }
+                ?>
+            </select>
+
+            <label for="violator-section-filter">Section:</label>
+            <select id="violator-section-filter" onchange="filterViolators()">
+                <option value="">All</option>
+            </select>
+            </div>
+
             <div class="table-container">
             <table class="styled-table" id="violators-table">
                 <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                    </tr>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = $violators_result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['violation_description']); ?></td>
-                            <td><?php echo htmlspecialchars($row['violation_date']); ?></td>
-                            <td><?php echo date("h:i A", strtotime($row['violation_time'])); ?></td>
-                        </tr>
-                    <?php endwhile; ?>
+                <?php while ($row = $violators_result->fetch_assoc()): ?>
+                    <tr data-grade_level="<?php echo htmlspecialchars($row['grade_level']); ?>" data-section="<?php echo htmlspecialchars($row['section']); ?>">
+                    <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['violation_description']); ?></td>
+                    <td><?php echo htmlspecialchars($row['violation_date']); ?></td>
+                    <td><?php echo date("h:i A", strtotime($row['violation_time'])); ?></td>
+                    </tr>
+                <?php endwhile; ?>
                 </tbody>
             </table>
             </div>
         </section>
+
+        <script>
+            const sectionsDataViolators = {
+            "Grade 7": ["Venus", "Earth", "Mars", "Jupiter", "Mercury"],
+            "Grade 8": ["Amethyst", "Diamond", "Ruby", "Emerald", "Pearl"],
+            "Grade 9": ["Gold", "Silver", "Cobalt", "Nickel", "Iron"],
+            "Grade 10": ["Aries", "Leo", "Pisces", "Virgo", "Gemini"],
+            "Grade 11": ["Del Pilar", "Malvar", "Bonifacio", "Agoncillo", "Rizal"],
+            "Grade 12": ["Zamora", "Quezon", "Aguinaldo", "Jacinto", "Mabini"]
+            };
+
+            function updateSectionsViolators() {
+            const gradeFilter = document.getElementById("violator-grade-filter");
+            const sectionSelect = document.getElementById("violator-section-filter");
+            const selectedGrade = gradeFilter.value;
+
+            // Reset section options
+            sectionSelect.innerHTML = '<option value="">All</option>';
+
+            if (selectedGrade && sectionsDataViolators[selectedGrade]) {
+                sectionsDataViolators[selectedGrade].forEach(function(section) {
+                const option = document.createElement("option");
+                option.value = section;
+                option.textContent = section;
+                sectionSelect.appendChild(option);
+                });
+            } else {
+                // When no grade is selected, show all sections grouped by grade
+                for (const [grade, sections] of Object.entries(sectionsDataViolators)) {
+                const optgroup = document.createElement("optgroup");
+                optgroup.label = grade;
+                sections.forEach(function(section) {
+                    const option = document.createElement("option");
+                    option.value = section;
+                    option.textContent = section;
+                    optgroup.appendChild(option);
+                });
+                sectionSelect.appendChild(optgroup);
+                }
+            }
+            }
+
+            function filterViolators() {
+            var gradeFilter = document.getElementById('violator-grade-filter').value.toLowerCase();
+            var sectionFilter = document.getElementById('violator-section-filter').value.toLowerCase();
+            var table = document.getElementById('violators-table');
+            var rows = table.getElementsByTagName('tr');
+
+            // Skip header row at index 0
+            for (var i = 1; i < rows.length; i++) {
+                var row = rows[i];
+                var grade = row.getAttribute('data-grade_level') ? row.getAttribute('data-grade_level').toLowerCase() : '';
+                var section = row.getAttribute('data-section') ? row.getAttribute('data-section').toLowerCase() : '';
+
+                if ((gradeFilter === '' || grade === gradeFilter) && (sectionFilter === '' || section === sectionFilter)) {
+                row.style.display = '';
+                } else {
+                row.style.display = 'none';
+                }
+            }
+            }
+
+            document.addEventListener("DOMContentLoaded", updateSectionsViolators);
+        </script>
         <br>
 
      <!-- -->
         <section class="section frequent-violators">
             <h2>Violation History</h2>
             <input type="text" id="search-history" onkeyup="searchTable('history-table', 'search-history')" placeholder="Search for names..">
+
+            <!-- New Filters for Grade Level and Section -->
+            <div class="filters">
+            <label for="grade-filter">Grade Level:</label>
+            <select id="grade-filter" onchange="updateSections(); filterHistory();">
+                <option value="">All</option>
+                <?php
+                $grades = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
+                foreach ($grades as $grade) {
+                    echo "<option value='" . htmlspecialchars($grade) . "'>" . htmlspecialchars($grade) . "</option>";
+                }
+                ?>
+            </select>
+
+            <label for="section-filter">Section:</label>
+            <select id="section-filter" onchange="filterHistory()">
+                <option value="">All</option>
+            </select>
+
+            <script>
+                const sectionsData = {
+                    "Grade 7": ["Venus", "Earth", "Mars", "Jupiter", "Mercury"],
+                    "Grade 8": ["Amethyst", "Diamond", "Ruby", "Emerald", "Pearl"],
+                    "Grade 9": ["Gold", "Silver", "Cobalt", "Nickel", "Iron"],
+                    "Grade 10": ["Aries", "Leo", "Pisces", "Virgo", "Gemini"],
+                    "Grade 11": ["Del Pilar", "Malvar", "Bonifacio", "Agoncillo", "Rizal"],
+                    "Grade 12": ["Zamora", "Quezon", "Aguinaldo", "Jacinto", "Mabini"]
+                };
+
+                function updateSections() {
+                    const gradeFilter = document.getElementById("grade-filter");
+                    const sectionSelect = document.getElementById("section-filter");
+                    const selectedGrade = gradeFilter.value;
+
+                    // Reset section options
+                    sectionSelect.innerHTML = '<option value="">All</option>';
+
+                    if (selectedGrade && sectionsData[selectedGrade]) {
+                        sectionsData[selectedGrade].forEach(function(section) {
+                            const option = document.createElement("option");
+                            option.value = section;
+                            option.textContent = section;
+                            sectionSelect.appendChild(option);
+                        });
+                    } else {
+                        // When no grade is selected, show all sections grouped by grade
+                        for (const [grade, sections] of Object.entries(sectionsData)) {
+                            const optgroup = document.createElement("optgroup");
+                            optgroup.label = grade;
+                            sections.forEach(function(section) {
+                                const option = document.createElement("option");
+                                option.value = section;
+                                option.textContent = section;
+                                optgroup.appendChild(option);
+                            });
+                            sectionSelect.appendChild(optgroup);
+                        }
+                    }
+                }
+
+                document.addEventListener("DOMContentLoaded", updateSections);
+            </script>
+            </select>
+            </div>
+
             <div class="table-container">
             <table class="styled-table" id="history-table">
                 <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Total Violations</th>
-                        <th>Actions</th>
-                    </tr>
+                <tr>
+                    <th>Name</th>
+                    <th>Total Violations</th>
+                    <th>Actions</th>
+                </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = $violation_history_result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['violation_count']); ?></td>
-                            <td><button class='view-violations' data-username='<?php echo htmlspecialchars($row['username']); ?>'>View Details</button></td>
-                        </tr>
-                    <?php endwhile; ?>
+                <?php while ($row = $violation_history_result->fetch_assoc()): ?>
+                    <tr data-grade_level="<?php echo htmlspecialchars($row['grade_level']); ?>" data-section="<?php echo htmlspecialchars($row['section']); ?>">
+                    <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['violation_count']); ?></td>
+                    <td>
+                        <button class="view-violations" data-username="<?php echo htmlspecialchars($row['username']); ?>">View Details</button>
+                    </td>
+                    </tr>
+                <?php endwhile; ?>
                 </tbody>
             </table>
             </div>
         </section>
+
+        <script>
+        function filterHistory() {
+            var gradeFilter = document.getElementById('grade-filter').value.toLowerCase();
+            var sectionFilter = document.getElementById('section-filter').value.toLowerCase();
+            var table = document.getElementById('history-table');
+            var rows = table.getElementsByTagName('tr');
+
+            // Skip table header row which is at index 0
+            for (var i = 1; i < rows.length; i++) {
+            var row = rows[i];
+            var grade = row.getAttribute('data-grade_level') ? row.getAttribute('data-grade_level').toLowerCase() : '';
+            var section = row.getAttribute('data-section') ? row.getAttribute('data-section').toLowerCase() : '';
+
+            if ((gradeFilter === '' || grade === gradeFilter) && (sectionFilter === '' || section === sectionFilter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+            }
+        }
+        </script>
         <br>
          <!-- -->
         <br>
