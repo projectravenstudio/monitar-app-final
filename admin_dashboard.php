@@ -29,7 +29,7 @@ $total_students = $conn->query($query_students)->fetch_assoc()['total_students']
 
 // Fetch violators for today
 $today = date('Y-m-d');
-$violators_query = "SELECT v.*, s.first_name, s.last_name 
+$violators_query = "SELECT v.*, s.first_name, s.last_name, s.grade_level, s.section 
                     FROM violations v 
                     JOIN stud_tbl s ON v.username = s.username 
                     WHERE v.violation_date = ?";
@@ -564,6 +564,7 @@ document.querySelectorAll("#user-table tbody tr").forEach((row, index) => {
 document.addEventListener("DOMContentLoaded", function () {
     const openButtons = document.querySelectorAll(".open-modal-btn");
     const closeButtons = document.querySelectorAll(".close");
+    const downloadButton = document.querySelector(".download-button");
 
     // Open the modal when clicking the "Modify" button
     openButtons.forEach(button => {
@@ -581,6 +582,38 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    downloadButton.addEventListener("click", function(){
+        const violatorsTable = document.getElementById("violators-table");
+
+        // Get headers from the table's thead
+        const headerRow = violatorsTable.querySelector("thead tr");
+        let headers = [];
+        headerRow.querySelectorAll("th").forEach(th => {
+            headers.push('"' + th.textContent.trim().replace(/"/g, '""') + '"');
+        });
+
+        let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\r\n";
+
+        // Process each row in tbody
+        const rows = violatorsTable.querySelectorAll("tbody tr");
+        rows.forEach(row => {
+            const cells = row.querySelectorAll("td");
+            let rowData = [];
+            cells.forEach(cell => {
+                rowData.push('"' + cell.textContent.trim().replace(/"/g, '""') + '"');
+            });
+            csvContent += rowData.join(",") + "\r\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "todays_violations.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+
     // Close modal when clicking outside of it
     window.addEventListener("click", function (event) {
         document.querySelectorAll("[id^='modal-']").forEach(modal => {
@@ -589,6 +622,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
 });
 
 
