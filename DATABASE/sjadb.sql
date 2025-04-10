@@ -92,7 +92,6 @@ CREATE TABLE IF NOT EXISTS `teach_user` (
 REPLACE INTO `teach_user` (`id`, `username`, `password`, `created_at`, `role`, `first_name`, `last_name`, `grade_level`, `section`) VALUES
 	(1, 'admin', 'SJA2025', '2025-02-12 06:37:14', 'admin', 'Admin', 'Moderator', 'Admin', 'Admin'),
 	(2, 'T01', 'mote', '2025-02-12 22:15:51', 'teacher', 'Jana', 'Doe', 'Grade 7', 'Venus');
-  (3, 'T02', 'mote', '2025-02-12 23:15:51', 'student', 'Jon', 'Doe', 'Grade 7', 'Venus');
 
 
 -- Dumping structure for table sjadb.violations

@@ -224,6 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                 <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Section</th>
                     <th>Description</th>
                     <th>Date</th>
                     <th>Time</th>
@@ -233,6 +234,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                 <?php while ($row = $violators_result->fetch_assoc()): ?>
                     <tr data-grade_level="<?php echo htmlspecialchars($row['grade_level']); ?>" data-section="<?php echo htmlspecialchars($row['section']); ?>">
                     <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['section']); ?>
                     <td><?php echo htmlspecialchars($row['violation_description']); ?></td>
                     <td><?php echo htmlspecialchars($row['violation_date']); ?></td>
                     <td><?php echo date("h:i A", strtotime($row['violation_time'])); ?></td>
@@ -325,6 +327,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                 }
                 ?>
             </select>
+            
 
             <label for="section-filter">Section:</label>
             <select id="section-filter" onchange="filterHistory()">
@@ -382,6 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                 <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Section</th>
                     <th>Total Violations</th>
                     <th>Actions</th>
                 </tr>
@@ -390,6 +394,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                 <?php while ($row = $violation_history_result->fetch_assoc()): ?>
                     <tr data-grade_level="<?php echo htmlspecialchars($row['grade_level']); ?>" data-section="<?php echo htmlspecialchars($row['section']); ?>">
                     <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['section']); ?> </td>
                     <td><?php echo htmlspecialchars($row['violation_count']); ?></td>
                     <td>
                         <button class="view-violations" data-username="<?php echo htmlspecialchars($row['username']); ?>">View Details</button>
@@ -400,6 +405,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
             </table>
             </div>
         </section>
+        
+        <div id="violation-modal" class="raven-modal" style="display: none;">
+    <div class="raven-modal-content">
+        <div class="raven-modal-header">
+            <span class="raven-close-btn">&times;</span>
+            <h2 class="raven-modal-title">Violation Details</h2>
+        </div>
+        <div id="violation-details" class="raven-modal-body"></div>
+    </div>
+</div>
+        
 
         <script>
         function filterHistory() {
@@ -661,6 +677,104 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
+// View Violations Modal Functionality
+document.querySelectorAll(".view-violations").forEach(button => {
+        button.addEventListener("click", function () {
+            let username = this.getAttribute("data-username");
+
+            fetch(`fetch_violations.php?username=${username}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        let modalDetails = document.getElementById("violation-details");
+                        modalDetails.innerHTML = ""; // Clear previous content
+
+                        if (data.length === 0) {
+                            modalDetails.innerHTML += "<p>No violations found.</p>";
+                        } else {
+                            let table = "<table class='styled-table'><thead><tr><th>Description</th><th>Date</th><th>Time</th><th>Actions</th></tr></thead><tbody>";
+                            data.forEach(v => {
+                                table += `<tr data-id="${v.id}">
+                                    <td><input type="text" value="${v.violation_description}" class="edit-description"></td>
+                                    <td>${v.violation_date}</td>
+                                    <td>${v.violation_time}</td>
+                                    <td>
+                                        <button class="save-edit" data-id="${v.id}">Save</button>
+                                        <button class="delete-violation" data-id="${v.id}">Delete</button>
+                                    </td>
+                                </tr>`;
+                            });
+                            table += "</tbody></table>";
+                            modalDetails.innerHTML += table;
+                        }
+
+                        // Show modal
+                        document.getElementById("violation-modal").style.display = "block";
+
+                        // Attach event listeners for edit and delete
+                        document.querySelectorAll(".save-edit").forEach(btn => {
+                            btn.addEventListener("click", function () {
+                                let violationId = this.getAttribute("data-id");
+                                let newDesc = this.closest("tr").querySelector(".edit-description").value;
+
+                                fetch("update_violation.php", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ violation_id: violationId, new_description: newDesc })
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert("Violation updated successfully!");
+                                        this.closest("tr").querySelector(".edit-description").value = newDesc; // Update input value
+                                    } else {
+                                        alert("Failed to update violation.");
+                                    }
+                                });
+                            });
+                        });
+
+                        document.querySelectorAll(".delete-violation").forEach(btn => {
+                            btn.addEventListener("click", function () {
+                                let violationId = this.getAttribute("data-id");
+                                if (confirm("Are you sure you want to delete this violation?")) {
+                                    fetch("delete_violation.php", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ violation_id: violationId })
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            alert("Violation deleted successfully!");
+                                            this.closest("tr").remove();
+                                        } else {
+                                            alert("Failed to delete violation.");
+                                        }
+                                    });
+                                }
+                            });
+                        });
+
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+        });
+    });
+
+     // Close modal when clicking the close button
+     document.querySelector(".raven-close-btn").addEventListener("click", function () {
+        document.getElementById("violation-modal").style.display = "none";
+    });
+
+    // Close modal when clicking outside
+    document.getElementById("violation-modal").addEventListener("click", function (e) {
+        if (e.target === this) {
+            this.style.display = "none";
+        }
+    });
 
 </script>
 </body>

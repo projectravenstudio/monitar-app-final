@@ -158,16 +158,16 @@ $violation_history_result = $violation_history_stmt->get_result();
         </section>
 
 
- <!-- Modal for violation details -->
-<div id="violation-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div id="modal-header">
-            <span class="close-btn">&times;</span>
-            <h2>Violation Details</h2>
+        <!-- Modal for violation details -->
+        <div id="violation-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div id="modal-header">
+                    <span class="close-btn">&times;</span>
+                    <h2>Violation Details</h2>
+                </div>
+                <div id="violation-details"></div>
+            </div>
         </div>
-        <div id="violation-details"></div>
-    </div>
-</div>
 
 </div>
     <script>
