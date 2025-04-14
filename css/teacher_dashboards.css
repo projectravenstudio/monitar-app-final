@@ -261,3 +261,29 @@ input[type="text"]::placeholder {
     color: #888;
     font-style: italic;
 }
+
+/* Style for Delete button */
+.delete-student {
+    background-color: #e74c3c; /* Red background */
+    color: white; /* White text color */
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.delete-student:hover {
+    background-color: #c0392b; /* Darker red when hovered */
+    transform: scale(1.05); /* Slight zoom effect on hover */
+}
+
+.delete-student:focus {
+    outline: none; /* Remove focus outline */
+}
+
+.delete-student:active {
+    background-color: #e74c3c; /* Keep the background color when clicked */
+    transform: scale(0.98); /* Slight scale down effect on click */
+}

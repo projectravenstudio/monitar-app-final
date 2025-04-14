@@ -48,7 +48,6 @@ $violators_stmt->bind_param("sss", $teacher_grade_level, $teacher_section, $toda
 $violators_stmt->execute();
 $violators_result = $violators_stmt->get_result();
 
-
 // Fetch violation history
 $violation_history_query = "SELECT s.username, s.first_name, s.last_name, 
                             COUNT(v.id) AS violation_count 
@@ -63,7 +62,26 @@ $violation_history_stmt->bind_param("ss", $teacher_grade_level, $teacher_section
 $violation_history_stmt->execute();
 $violation_history_result = $violation_history_stmt->get_result();
 
+// Handle delete student request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['student_id'])) {
+    $student_id = $_POST['student_id'];
 
+    if ($student_id) {
+        // Delete the student
+        $delete_student_query = "DELETE FROM stud_tbl WHERE id = ?";
+        $delete_student_stmt = $conn->prepare($delete_student_query);
+        $delete_student_stmt->bind_param("i", $student_id);
+
+        if ($delete_student_stmt->execute()) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Failed to delete student.']);
+        }
+    } else {
+        echo json_encode(['success' => false, 'error' => 'Invalid student ID.']);
+    }
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -89,15 +107,26 @@ $violation_history_result = $violation_history_stmt->get_result();
 
         <section class="section class-list">
             <h2>Class List</h2>
-            <input type="text" id="search-class" onkeyup="searchTable('class-table', 'search-class')" placeholder="Search for names..">
+            <input type="text" id="search-class-list" onkeyup="searchTable('class-list-table', 'search-class-list')" placeholder="Search for names..">
             <div class="table-container">
-            <table class="styled-table" id="class-table">
-                <thead><tr><th>Name</th><th>Actions</th></tr></thead>
+            <table class="styled-table" id="class-list-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Grade Level</th>
+                        <th>Section</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
                 <tbody>
                     <?php while ($row = $class_result->fetch_assoc()): ?>
                         <tr>
                             <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
-                            <td><a href='student_details.php?username=<?php echo urlencode($row['username']); ?>'>View Details</a></td>
+                            <td><?php echo htmlspecialchars($row['grade_level']); ?></td>
+                            <td><?php echo htmlspecialchars($row['section']); ?></td>
+                            <td>
+                                <button class="delete-student" data-id="<?php echo $row['id']; ?>">Delete</button>
+                            </td>
                         </tr>
                     <?php endwhile; ?>
                 </tbody>
@@ -141,7 +170,6 @@ $violation_history_result = $violation_history_stmt->get_result();
                     <tr>
                         <th>Name</th>
                         <th>Total Violations</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -149,7 +177,6 @@ $violation_history_result = $violation_history_stmt->get_result();
                         <tr>
                             <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['violation_count']); ?></td>
-                            <td><button class='view-violations' data-username='<?php echo htmlspecialchars($row['username']); ?>'>View Details</button></td>
                         </tr>
                     <?php endwhile; ?>
                 </tbody>
@@ -157,156 +184,91 @@ $violation_history_result = $violation_history_stmt->get_result();
             </div>
         </section>
 
+    </div>
 
-        <!-- Modal for violation details -->
-        <div id="violation-modal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <div id="modal-header">
-                    <span class="close-btn">&times;</span>
-                    <h2>Violation Details</h2>
-                </div>
-                <div id="violation-details"></div>
-            </div>
-        </div>
-
-</div>
     <script>
-document.addEventListener("DOMContentLoaded", function () {
-    // Search Functionality
-    function searchTable(tableId, searchInputId) {
-        let input = document.getElementById(searchInputId).value.toLowerCase();
-        let table = document.getElementById(tableId);
-        let rows = table.getElementsByTagName("tr");
+    document.addEventListener("DOMContentLoaded", function () {
+        // Search Functionality
+        function searchTable(tableId, searchInputId) {
+            let input = document.getElementById(searchInputId).value.toLowerCase();
+            let table = document.getElementById(tableId);
+            let rows = table.getElementsByTagName("tr");
 
-        for (let i = 1; i < rows.length; i++) { // Start from index 1 to skip table headers
-            let cells = rows[i].getElementsByTagName("td");
-            let found = false;
+            for (let i = 1; i < rows.length; i++) { // Start from index 1 to skip table headers
+                let cells = rows[i].getElementsByTagName("td");
+                let found = false;
 
-            for (let cell of cells) {
-                if (cell.textContent.toLowerCase().includes(input)) {
-                    found = true;
-                    break;
-                }
-            }
-
-            rows[i].style.display = found ? "" : "none";
-        }
-    }
-
-    // Attach search event listeners
-    document.getElementById("search-class").addEventListener("keyup", function () {
-        searchTable("class-table", "search-class");
-    });
-
-    document.getElementById("search-violators").addEventListener("keyup", function () {
-        searchTable("violators-table", "search-violators");
-    });
-
-    document.getElementById("search-history").addEventListener("keyup", function () {
-        searchTable("history-table", "search-history");
-    });
-
-    // View Violations Modal Functionality
-    document.querySelectorAll(".view-violations").forEach(button => {
-        button.addEventListener("click", function () {
-            let username = this.getAttribute("data-username");
-
-            fetch(`fetch_violations.php?username=${username}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
-                    } else {
-                        let modalDetails = document.getElementById("violation-details");
-                        modalDetails.innerHTML = ""; // Clear previous content
-
-                        if (data.length === 0) {
-                            modalDetails.innerHTML += "<p>No violations found.</p>";
-                        } else {
-                            let table = "<table class='styled-table'><thead><tr><th>Description</th><th>Date</th><th>Time</th><th>Actions</th></tr></thead><tbody>";
-                            data.forEach(v => {
-                                table += `<tr data-id="${v.id}">
-                                    <td><input type="text" value="${v.violation_description}" class="edit-description"></td>
-                                    <td>${v.violation_date}</td>
-                                    <td>${v.violation_time}</td>
-                                    <td>
-                                        <button class="save-edit" data-id="${v.id}">Save</button>
-                                        <button class="delete-violation" data-id="${v.id}">Delete</button>
-                                    </td>
-                                </tr>`;
-                            });
-                            table += "</tbody></table>";
-                            modalDetails.innerHTML += table;
-                        }
-
-                        // Show modal
-                        document.getElementById("violation-modal").style.display = "block";
-
-                        // Attach event listeners for edit and delete
-                        document.querySelectorAll(".save-edit").forEach(btn => {
-                            btn.addEventListener("click", function () {
-                                let violationId = this.getAttribute("data-id");
-                                let newDesc = this.closest("tr").querySelector(".edit-description").value;
-
-                                fetch("update_violation.php", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ violation_id: violationId, new_description: newDesc })
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        alert("Violation updated successfully!");
-                                        this.closest("tr").querySelector(".edit-description").value = newDesc; // Update input value
-                                    } else {
-                                        alert("Failed to update violation.");
-                                    }
-                                });
-                            });
-                        });
-
-                        document.querySelectorAll(".delete-violation").forEach(btn => {
-                            btn.addEventListener("click", function () {
-                                let violationId = this.getAttribute("data-id");
-                                if (confirm("Are you sure you want to delete this violation?")) {
-                                    fetch("delete_violation.php", {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({ violation_id: violationId })
-                                    })
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        if (data.success) {
-                                            alert("Violation deleted successfully!");
-                                            this.closest("tr").remove();
-                                        } else {
-                                            alert("Failed to delete violation.");
-                                        }
-                                    });
-                                }
-                            });
-                        });
-
+                for (let cell of cells) {
+                    if (cell.textContent.toLowerCase().includes(input)) {
+                        found = true;
+                        break;
                     }
-                })
-                .catch(error => console.error("Error:", error));
+                }
+
+                rows[i].style.display = found ? "" : "none";
+            }
+        }
+
+        // Attach search event listeners
+        document.getElementById("search-violators").addEventListener("keyup", function () {
+            searchTable("violators-table", "search-violators");
+        });
+
+        document.getElementById("search-history").addEventListener("keyup", function () {
+            searchTable("history-table", "search-history");
+        });
+
+        document.getElementById("search-class-list").addEventListener("keyup", function () {
+            searchTable("class-list-table", "search-class-list");
+        });
+
+        // Delete Violation
+        document.querySelectorAll(".delete-violation").forEach(btn => {
+            btn.addEventListener("click", function () {
+                let violationId = this.getAttribute("data-id");
+                if (confirm("Are you sure you want to delete this violation?")) {
+                    fetch("<?php echo $_SERVER['PHP_SELF']; ?>", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: `violation_id=${violationId}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Violation deleted successfully!");
+                            this.closest("tr").remove(); // Remove the row from the table
+                        } else {
+                            alert("Failed to delete violation.");
+                        }
+                    });
+                }
+            });
+        });
+
+        // Delete Student
+        document.querySelectorAll(".delete-student").forEach(btn => {
+            btn.addEventListener("click", function () {
+                let studentId = this.getAttribute("data-id");
+                if (confirm("Are you sure you want to delete this student from the class?")) {
+                    fetch("<?php echo $_SERVER['PHP_SELF']; ?>", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: `student_id=${studentId}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Student deleted successfully!");
+                            this.closest("tr").remove(); // Remove the row from the table
+                        } else {
+                            alert("Failed to delete student.");
+                        }
+                    });
+                }
+            });
         });
     });
-
-    // Close modal when clicking the close button
-    document.querySelector(".close-btn").addEventListener("click", function () {
-        document.getElementById("violation-modal").style.display = "none";
-    });
-
-    // Close modal when clicking outside
-    document.getElementById("violation-modal").addEventListener("click", function (e) {
-        if (e.target === this) {
-            this.style.display = "none";
-        }
-    });
-
-});
-</script>
-
+    
+    </script>
 </body>
 </html>

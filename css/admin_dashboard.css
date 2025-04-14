@@ -533,3 +533,35 @@ form button:hover {
     font-size: 1rem;
     color: #444;
 }
+
+/* Style for Delete button */
+.delete-button-wrapper {
+    display: flex;
+    justify-content: flex-end;
+}
+
+#delete-selected {
+    background-color: #003366;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#delete-selected:hover {
+    background-color: #c0392b;
+}
+
+#delete-selected:focus {
+    outline: none; /* Remove focus outline */
+}
+
+#delete-selected:active {
+    background-color: #e74c3c; /* Keep the background color when clicked */
+    transform: scale(0.98); /* Slight scale down effect on click */
+}

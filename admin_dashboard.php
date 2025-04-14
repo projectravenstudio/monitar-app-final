@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toggle_registration']
 
 
 // Default password hash (replace with your generated hash!)
-define('DEFAULT_PASSWORD_HASH', '$2y$10$YOUR_GENERATED_HASH_HERE');
+define('DEFAULT_PASSWORD_HASH', '');
 
 // Handle password reset
 // if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
@@ -80,30 +80,109 @@ define('DEFAULT_PASSWORD_HASH', '$2y$10$YOUR_GENERATED_HASH_HERE');
 //     header("Location: admin_dashboard.php");
 //     exit;
 // }
+// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
+//     $user_id = intval($_POST['user_id']);
+    
+//     // Ensure DEFAULT_PASSWORD_HASH is properly defined
+//     $default_password = password_hash("1234", PASSWORD_DEFAULT);
+    
+//     $update_query = "UPDATE teach_user SET password = '$default_password' WHERE id = $user_id";
+//     $conn->query($update_query);
+    
+//     header("Location: admin_dashboard.php");
+//     exit;
+// }
+
+// Handle password reset
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_password'])) {
     $user_id = intval($_POST['user_id']);
     
-    // Ensure DEFAULT_PASSWORD_HASH is properly defined
-    $default_password = password_hash("default_password", PASSWORD_DEFAULT);
+    // Default password is '1234' and hash it
+    $default_password = password_hash("1234", PASSWORD_DEFAULT);
     
-    $update_query = "UPDATE teach_user SET password = '$default_password' WHERE id = $user_id";
-    $conn->query($update_query);
+    // Prepare the update query
+    $update_query = $conn->prepare("UPDATE teach_user SET password = ?, password = 1234 WHERE id = ?");
     
+    // Bind parameters: s for string (password), i for integer (user_id)
+    $update_query->bind_param("si", $default_password, $user_id);
+    
+    // Execute the query
+    $update_query->execute();
+    
+    // Redirect back to the admin dashboard
     header("Location: admin_dashboard.php");
     exit;
 }
 
 
-
+// // Handle password edit
+// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
+//     $user_id = intval($_POST['user_id']);
+//     $new_password = $_POST['new_password'];
+//     $hashed_password = password_hash($new_password, PASSWORD_DEFAULT); // Hash the new password
+//     $update_query = "UPDATE teach_user SET password = '$hashed_password' WHERE id = $user_id";
+//     $conn->query($update_query);
+//     header("Location: admin_dashboard.php");
+//     exit;
+// }
 // Handle password edit
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
     $user_id = intval($_POST['user_id']);
-    $new_password = $_POST['new_password'];
-    $hashed_password = password_hash($new_password, PASSWORD_DEFAULT); // Hash the new password
-    $update_query = "UPDATE teach_user SET password = '$hashed_password' WHERE id = $user_id";
-    $conn->query($update_query);
+    $new_password = $_POST['new_password'];  // Get the password directly from the user input
+
+    // Prepare the update query using a prepared statement
+    $update_query = $conn->prepare("UPDATE teach_user SET password = ? WHERE id = ?");
+
+    // Bind the parameters: s for string (password), i for integer (user_id)
+    $update_query->bind_param("si", $new_password, $user_id);
+
+    // Execute the query
+    $update_query->execute();
+
+    // Redirect back to the admin dashboard
     header("Location: admin_dashboard.php");
     exit;
+}
+// Handle delete student request
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Mass deletion
+    if (isset($_POST['student_ids'])) {
+        $student_ids = json_decode($_POST['student_ids'], true);
+        if (is_array($student_ids) && count($student_ids) > 0) {
+            $placeholders = implode(',', array_fill(0, count($student_ids), '?'));
+            $types = str_repeat('i', count($student_ids));
+            $stmt = $conn->prepare("DELETE FROM stud_tbl WHERE id IN ($placeholders)");
+            $stmt->bind_param($types, ...$student_ids);
+
+            if ($stmt->execute()) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Failed to delete selected students.']);
+            }
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Invalid student IDs.']);
+        }
+        exit;
+    }
+
+    // Single deletion (existing logic)
+    if (isset($_POST['student_id'])) {
+        $student_id = $_POST['student_id'];
+        if ($student_id) {
+            $delete_student_query = "DELETE FROM stud_tbl WHERE id = ?";
+            $delete_student_stmt = $conn->prepare($delete_student_query);
+            $delete_student_stmt->bind_param("i", $student_id);
+
+            if ($delete_student_stmt->execute()) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Failed to delete student.']);
+            }
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Invalid student ID.']);
+        }
+        exit;
+    }
 }
 ?>
 
@@ -183,18 +262,101 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
         <br>
         <br>
         <form method="GET" class="filter-form">
-                    <label for="filter_date">Date:</label>
-                    <input type="date" name="filter_date" id="filter_date" value="<?= $_GET['filter_date'] ?? '' ?>">
+            <label for="filter_date">Date:</label>
+            <input type="date" name="filter_date" id="filter_date" value="<?= $_GET['filter_date'] ?? '' ?>">
 
-                    <label for="filter_week">Week:</label>
-                    <input type="week" name="filter_week" id="filter_week" value="<?= $_GET['filter_week'] ?? '' ?>">
+            <label for="filter_week">Week:</label>
+            <input type="week" name="filter_week" id="filter_week" value="<?= $_GET['filter_week'] ?? '' ?>">
 
-                    <label for="filter_month">Month:</label>
-                    <input type="month" name="filter_month" id="filter_month" value="<?= $_GET['filter_month'] ?? '' ?>">
+            <label for="filter_month">Month:</label>
+            <input type="month" name="filter_month" id="filter_month" value="<?= $_GET['filter_month'] ?? '' ?>">
 
-                    <button type="submit" class="apply-filter-button">Apply Filter</button>
-                </form>
-                <br>
+            <button type="submit" class="apply-filter-button">Apply Filter</button>
+        </form>
+        <br>
+
+        <!-- -->
+        <?php 
+// Assuming the user role is stored in a session variable
+$user_role = $_SESSION['role'];  // Replace with your session variable if different
+
+if ($user_role === 'admin') {
+    // Admin bypass logic: You can choose not to run the query or run it differently
+    // For example, set $class_result to an empty array or modify it to show admin-specific data
+    $class_result = [];  // Empty or predefined data for the admin view
+} else {
+    // Query for non-admin users (normal flow)
+    $class_result = $conn->query("SELECT * FROM students WHERE status = 'active'");
+}
+?>
+
+<?php if ($user_role === 'admin'): ?>
+    <?php
+// Assuming the user role is stored in a session variable
+$user_role = $_SESSION['role'];  // Replace with your session variable if different
+
+// If the user is an admin, fetch all students without filtering by grade level or section
+if ($user_role === 'admin') {
+    $class_query = "SELECT * FROM stud_tbl";  // Get all students
+    $class_stmt = $conn->prepare($class_query);
+} else {
+    // Query for non-admin users (e.g., teachers) to filter by grade level and section
+    $class_query = "SELECT * FROM stud_tbl WHERE grade_level = ? AND section = ?";
+    $class_stmt = $conn->prepare($class_query);
+    $class_stmt->bind_param("ss", $teacher_grade_level, $teacher_section);  // Bind teacher's grade level and section
+}
+
+// Execute the query and get the result
+$class_stmt->execute();
+$class_result = $class_stmt->get_result();
+?>
+
+<section class="section class-list">
+    <h2>Class List</h2>
+    <input type="text" id="search-class-list" onkeyup="searchTable('class-list-table', 'search-class-list')" placeholder="Search for names..">
+    <label for="entries">Show 
+        <select id="entries" onchange="filterTableEntries()">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="15">15</option>
+            <option value="25">25</option>
+        </select> entries
+        <div class="delete-button-wrapper">
+        <button id="delete-selected">Delete Selected</button>
+    </div>
+    </label>
+
+    <div class="table-container">
+    <table class="styled-table" id="class-list-table">
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="select-all"></th>
+                <th>Name</th>
+                <th>Grade Level</th>
+                <th>Section</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = $class_result->fetch_assoc()): ?>
+                <tr>
+                    <td><input type="checkbox" class="select-student" value="<?php echo $row['id']; ?>"></td>
+                    <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['grade_level']); ?></td>
+                    <td><?php echo htmlspecialchars($row['section']); ?></td>
+                    <td>
+                        <button class="delete-student" data-id="<?php echo $row['id']; ?>">Delete</button>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+        </tbody>
+    </table>
+</div>
+
+</section>
+
+<?php endif; ?>
+
     <!-- -->
         <section class="section violators-list">
             <h2>Today's Violations</h2>
@@ -224,6 +386,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                 <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Grade Level</th>
                     <th>Section</th>
                     <th>Description</th>
                     <th>Date</th>
@@ -234,6 +397,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                 <?php while ($row = $violators_result->fetch_assoc()): ?>
                     <tr data-grade_level="<?php echo htmlspecialchars($row['grade_level']); ?>" data-section="<?php echo htmlspecialchars($row['section']); ?>">
                     <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['grade_level']); ?></td>
                     <td><?php echo htmlspecialchars($row['section']); ?>
                     <td><?php echo htmlspecialchars($row['violation_description']); ?></td>
                     <td><?php echo htmlspecialchars($row['violation_date']); ?></td>
@@ -385,6 +549,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                 <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Grade Level</th>
                     <th>Section</th>
                     <th>Total Violations</th>
                     <th>Actions</th>
@@ -394,6 +559,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_password'])) {
                 <?php while ($row = $violation_history_result->fetch_assoc()): ?>
                     <tr data-grade_level="<?php echo htmlspecialchars($row['grade_level']); ?>" data-section="<?php echo htmlspecialchars($row['section']); ?>">
                     <td><?php echo htmlspecialchars($row['first_name'] . " " . $row['last_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['grade_level']); ?></td>
                     <td><?php echo htmlspecialchars($row['section']); ?> </td>
                     <td><?php echo htmlspecialchars($row['violation_count']); ?></td>
                     <td>
@@ -664,6 +830,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.removeChild(link);
     });
 
+
     // Close modal when clicking outside of it
     window.addEventListener("click", function (event) {
         document.querySelectorAll("[id^='modal-']").forEach(modal => {
@@ -671,10 +838,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 modal.style.display = "none";
             }
         });
-    });
-    
-
-
+    });  
 });
 
 // View Violations Modal Functionality
@@ -776,6 +940,114 @@ document.querySelectorAll(".view-violations").forEach(button => {
         }
     });
 
+// Filter visible rows
+function filterTableEntries() {
+    const limit = parseInt(document.getElementById("entries").value);
+    const rows = document.querySelectorAll("#class-list-table tbody tr");
+
+    rows.forEach((row, index) => {
+        row.style.display = (index < limit) ? "" : "none";
+    });
+}
+
+// Search table by name
+function searchTable(tableId, searchInputId) {
+    const input = document.getElementById(searchInputId).value.toLowerCase();
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+        // Search Functionality
+        function searchTable(tableId, searchInputId) {
+            let input = document.getElementById(searchInputId).value.toLowerCase();
+            let table = document.getElementById(tableId);
+            let rows = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < rows.length; i++) { // Start from index 1 to skip table headers
+                let cells = rows[i].getElementsByTagName("td");
+                let found = false;
+
+                for (let cell of cells) {
+                    if (cell.textContent.toLowerCase().includes(input)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                rows[i].style.display = found ? "" : "none";
+            }
+        }
+});
+
+// On page load
+document.addEventListener("DOMContentLoaded", function () {
+    filterTableEntries();
+
+    // Delete Student
+    document.querySelectorAll(".delete-student").forEach(btn => {
+            btn.addEventListener("click", function () {
+                let studentId = this.getAttribute("data-id");
+                if (confirm("Are you sure you want to delete this student from the class?")) {
+                    fetch("<?php echo $_SERVER['PHP_SELF']; ?>", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: `student_id=${studentId}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Student deleted successfully!");
+                            this.closest("tr").remove(); // Remove the row from the table
+                        } else {
+                            alert("Failed to delete student.");
+                        }
+                    });
+                }
+            });
+        });
+    });
+
+    //Mass delete
+document.getElementById("select-all").addEventListener("change", function() {
+    document.querySelectorAll(".select-student").forEach(cb => {
+        cb.checked = this.checked;
+    });
+});
+
+document.getElementById("delete-selected").addEventListener("click", function () {
+    const selectedIds = Array.from(document.querySelectorAll(".select-student:checked"))
+        .map(cb => cb.value);
+
+    if (selectedIds.length === 0) {
+        alert("No students selected.");
+        return;
+    }
+
+    if (confirm("Are you sure you want to delete the selected students?")) {
+        fetch("<?php echo $_SERVER['PHP_SELF']; ?>", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `student_ids=${JSON.stringify(selectedIds)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Selected students deleted successfully!");
+                selectedIds.forEach(id => {
+                    const row = document.querySelector(`.select-student[value="${id}"]`).closest("tr");
+                    row.remove();
+                });
+            } else {
+                alert("Failed to delete selected students.");
+            }
+        });
+    }
+});
 </script>
 </body>
 </html>
